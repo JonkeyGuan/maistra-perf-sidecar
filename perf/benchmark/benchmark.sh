@@ -17,8 +17,7 @@ SVC_SIDECAR_URL=http://fortio-server:8080
 ECHO_RESP_SIZE=1024
 PAYLOAD_SIZE=512
 SVC_PATH="echo?size=${ECHO_RESP_SIZE}"
-TEST_DURATION=30s
-# TEST_DURATION=180s
+TEST_DURATION=180s
 EXPECTED_QPS=10000
 JITTER=true
 HTTP_BUFFER_KB=1024
@@ -30,8 +29,7 @@ CLIENT_POD=$(oc get po | grep fortio-client | awk '{print $1}')
 # housekeeping
 rm -fv *.json
 
-# for i in 2 4 8 16 32 64;
-for i in 2;
+for i in 2 4 8 16 32 64;
 do
   # baseline
   echo -e '\n'
