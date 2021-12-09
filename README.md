@@ -1,1 +1,1 @@
-# maistra-perf-with-ingress
+# maistra-perf-sidecar

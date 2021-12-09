@@ -164,7 +164,7 @@ class Prom:
         out = flatten(self.fetch_cpu_by_container(),
                       "cpu_mili", aggregate=self.aggregate)
         out.update(flatten(self.fetch_memory_by_container(),
-                           "mem_Mi", aggregate=self.aggregate))
+                           "mem_mili", aggregate=self.aggregate))
         return out
 
     def fetch_num_requests_by_response_code(self, code):
@@ -261,8 +261,7 @@ class Prom:
 def flatten(data, metric, aggregate):
     res = {}
     for group, summary in data.items():
-        # remove - and flomesh- from group
-        grp = group.replace("flomesh-", "")
+        grp = group.replace("istio-", "")
         grp = grp.replace("-", "_")
         grp = grp.replace("/", "_")
         if aggregate:

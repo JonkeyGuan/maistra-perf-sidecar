@@ -1,0 +1,148 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: fortio-server
+spec:
+  hosts:
+    - fortio-server
+  http:
+    - route:
+        - destination:
+            host: fortio-server
+            port:
+              number: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fortio-server
+spec:
+  ports:
+  - name: http-echo
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  - name: http-echoa
+    port: 8077
+    targetPort: 8077
+    protocol: TCP
+  selector:
+    app: fortio-server
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: fortio-server
+  name: fortio-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fortio-server
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/interceptionMode: REDIRECT
+        sidecar.istio.io/inject: "true"
+        traffic.sidecar.istio.io/excludeInboundPorts: "8077"
+      labels:
+        app: fortio-server
+    spec:
+      containers:
+      - name: captured
+        image:  fortio/fortio:latest_release
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+      - name: uncaptured
+        image: fortio/fortio:latest_release
+        args:
+        - server
+        - -http-port
+        - "8077"
+---
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: fortio-client
+spec:
+  to:
+    kind: Service
+    name: fortio-client
+    weight: 100
+  port:
+    targetPort: 8077
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fortio-client
+spec:
+  ports:
+  - name: http-echo
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  - name: http-echoa
+    port: 8077
+    targetPort: 8077
+    protocol: TCP
+  selector:
+    app: fortio-client
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: fortio-client
+  name: fortio-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fortio-client
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/interceptionMode: REDIRECT
+        sidecar.istio.io/inject: "true"
+        traffic.sidecar.istio.io/excludeInboundPorts: "8077"
+      labels:
+        app: fortio-client
+    spec:
+      volumes:
+        - name: shared-data
+          emptyDir: {}
+      containers:
+      - name: captured
+        volumeMounts:
+          - name: shared-data
+            mountPath: /var/lib/fortio
+        image:  fortio/fortio:latest_release
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+      - name: shell
+        volumeMounts:
+          - name: shared-data
+            mountPath: /var/lib/fortio
+        image: 'cfmanteiga/alpine-bash-curl-jq:latest'
+        args:
+          - /bin/sleep
+          - 3650d
+      - name: uncaptured
+        volumeMounts:
+          - name: shared-data
+            mountPath: /var/lib/fortio
+        image: fortio/fortio:latest_release
+        args:
+        - report
+        - '-http-port'
+        - '8077'
+        - '-grpc-port'
+        - '8076'
+        - '-redirect-port'
+        - '8081'
+        - '-tcp-port'
+        - '8078'
