@@ -106,7 +106,7 @@ spec:
     metadata:
       annotations:
         sidecar.istio.io/interceptionMode: REDIRECT
-        sidecar.istio.io/inject: "true"
+        sidecar.istio.io/inject: "false"
         traffic.sidecar.istio.io/excludeInboundPorts: "8077"
       labels:
         app: fortio-client
